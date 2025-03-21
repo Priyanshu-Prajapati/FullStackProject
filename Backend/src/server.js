@@ -5,10 +5,12 @@ import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+const cors = require("cors");
 
 import User from "../models/user";
 
 async function start() {
+  // const url = `mongodb+srv://priyanshu18032003:Priyanshu6535@cluster0.rn98rof.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
   const url = `mongodb://localhost:27017`;
   const Mongoclient = new MongoClient(url);
 
@@ -16,6 +18,7 @@ async function start() {
   const db = Mongoclient.db("FullStack-Database");
 
   mongoose.connect(
+    // "mongodb+srv://priyanshu18032003:Priyanshu6535@cluster0.rn98rof.mongodb.net/registeredUsers?retryWrites=true&w=majority&appName=Cluster0",
     "mongodb://localhost:27017/registeredUsers",
     console.log("Connected To the Database!")
   );
@@ -23,27 +26,35 @@ async function start() {
   const app = express();
   app.use(express.json());
 
+  // OR configure specific origins
+  app.use(
+    cors({
+      origin: "full-stack-project-seven.vercel.app", // Frontend URL
+      methods: ["GET", "POST", "PUT", "DELETE"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+    })
+  );
+
   app.use(cookieParser());
- 
+
   app.post("/api/register", async (req, res) => {
     try {
       const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+      const hashedPassword = await bcrypt.hash(req.body.password, salt);
 
-    const user = new User({
-      email: req.body.email,
-      password: hashedPassword,
-    });
+      const user = new User({
+        email: req.body.email,
+        password: hashedPassword,
+      });
 
-    const result = await user.save();
-    const { password, ...data } = await result.toJSON();
-    res.send(data);
+      const result = await user.save();
+      const { password, ...data } = await result.toJSON();
+      res.send(data);
     } catch (e) {
       return res.status(404).send({
         messge: "User Already registered",
       });
     }
-    
   });
 
   app.post("/api/login", async (req, res) => {
@@ -76,42 +87,41 @@ async function start() {
   });
 
   app.get("/api/user", async (req, res) => {
-    try{
+    try {
       const cookie = req.cookies["jwt"];
 
-    const claims = jwt.verify(cookie, "supersecretsecret");
+      const claims = jwt.verify(cookie, "supersecretsecret");
 
-    if (!claims) {
+      if (!claims) {
+        return res.status(401).send({
+          messge: "Unauthenticated!!",
+        });
+      }
+
+      const user = await User.findOne({ _id: claims._id });
+
+      const { password, ...data } = await user.toJSON();
+
+      res.send(data);
+    } catch (e) {
       return res.status(401).send({
         messge: "Unauthenticated!!",
       });
     }
-
-    const user = await User.findOne({ _id: claims._id });
-
-    const { password, ...data } = await user.toJSON();
-
-    res.send(data);
-    }catch (e) {
-      return res.status(401).send({
-        messge: "Unauthenticated!!",
-      });
-    }
-    
   });
 
   app.post("/api/logout", async (req, res) => {
     const val = "";
-    const options = {maxAge: 0};
+    const options = { maxAge: 0 };
 
     res.cookie("jwt", val, options);
 
     res.send({
-      message: 'success'
-    })
+      message: "success",
+    });
   });
 
-  app.post('/api/orderDetails', async (req, res) => {
+  app.post("/api/orderDetails", async (req, res) => {
     const orderEmail = req.body.email;
     const orderCardHolder = req.body.cardHolder;
     const orderCardDetails = req.body.cardDetails;
@@ -129,11 +139,10 @@ async function start() {
       cardcvc: orderCardcvc,
       billingAdd: orderBillingAdd,
       billingZip: orderBillingZip,
-      totalPrice: orderTotalPrice
+      totalPrice: orderTotalPrice,
     });
     res.send("Added to database!!");
-
-  })
+  });
 
   app.use("/images", express.static(path.join(__dirname, "../assets")));
 
