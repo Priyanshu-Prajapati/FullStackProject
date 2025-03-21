@@ -11,14 +11,14 @@ import User from "../models/user";
 
 async function start() {
   // const url = `mongodb+srv://priyanshu18032003:Priyanshu6535@cluster0.rn98rof.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-  const url = `mongodb://localhost:27017`;
+  const uri = "mongodb+srv://prajapatipriyanshu077:IgiPztYBO19p2tLV@cluster0.y6k5l.mongodb.net/?appName=Cluster0";
   const Mongoclient = new MongoClient(url);
 
   await Mongoclient.connect();
   const db = Mongoclient.db("FullStack-Database");
 
   mongoose.connect(
-    // "mongodb+srv://priyanshu18032003:Priyanshu6535@cluster0.rn98rof.mongodb.net/registeredUsers?retryWrites=true&w=majority&appName=Cluster0",
+    "mongodb+srv://prajapatipriyanshu077:IgiPztYBO19p2tLV@cluster0.y6k5l.mongodb.net/?appName=Cluster0",
     "mongodb://localhost:27017/registeredUsers",
     console.log("Connected To the Database!")
   );
